@@ -1,0 +1,144 @@
+<html lang="en" ng-app="ChatApp">
+
+<head>
+    <title>Angularfire Chat</title>
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/angular_material/0.9.4/angular-material.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=RobotoDraft:300,400,500,700,400italic">
+    <meta name="viewport" content="initial-scale=1" />
+</head>
+
+<body layout="column" ng-controller="AppCtrl">
+    <md-toolbar layout="row">
+        <div class="md-toolbar-tools">
+            <md-button ng-click="toggleSidenav('left')" hide-gt-sm class="md-icon-button">
+                <md-icon aria-label="Menu" md-svg-icon="https://s3-us-west-2.amazonaws.com/s.cdpn.io/68133/menu.svg"></md-icon>
+            </md-button>
+            <h1>Angularfire Chat</h1>
+        </div>
+    </md-toolbar>
+    <div layout="row" flex ng-controller="ChatCtrl">
+        <md-sidenav layout="column" class="md-sidenav-left md-whiteframe-z2" md-component-id="left" md-is-locked-open="$mdMedia('gt-sm')">
+            <div layout="row" ng-repeat="room in rooms">
+                <md-button class="md-secondary" flex ng-click="selectRoom(room)" ng-class="{'md-raised': room.$id == selectedRoom.$id}">
+                    {{ room.name }}
+                </md-button>
+                <md-button class="md-fab md-mini md-warn" flex ng-click="removeRoom(room)" style="max-width: 2.5rem;">
+                    x
+                </md-button>
+            </div>
+            <div layout="row">
+                <form flex name="addRoomForm">
+                    <md-input-container>
+                        <label for="add-room-name">New Room Name</label>
+                        <input id="add-room-name" type="text" ng-model="newRoom.name" required>
+                    </md-input-container>
+                    <div>
+                        <md-button class="md-primary md-raised" ng-click="addRoom(newRoom)" ng-disabled="addRoomForm.$invalid">
+                            Add Room
+                        </md-button>
+                    </div>
+                </form>
+            </div>
+            <div layout="row">
+                <md-button class="md-secondary" flex ng-click="authObject.$unauth()" ng-show="user">
+                    Log Out
+                </md-button>
+            </div>
+        </md-sidenav>
+        <div layout="column" flex id="content">
+            <md-content layout="column" flex class="md-padding">
+                <div ng-if="!user" ng-controller="AuthCtrl">
+                    <md-whiteframe class="md-whiteframe-z0" layout="column" layout-align="center center" layout-padding layout-wrap>
+                        <md-button class="md-primary md-raised" ng-click="google()">
+                            Log in with Google
+                        </md-button>
+                    </md-whiteframe>
+                    <md-whiteframe class="md-whiteframe-z0" layout="row" layout-align="center center" layout-padding layout-wrap>
+                        <md-button class="md-primary md-raised" ng-click="facebook()">
+                            Log in with Facebook
+                        </md-button>
+                    </md-whiteframe>
+                    <md-whiteframe class="md-whiteframe-z1" layout="row" layout-padding layout-wrap>
+                        <h3>Login with Email and Password</h3>
+                        <form name="loginForm" style="width: 100%;">
+                            <md-input-container>
+                                <label for="login-email">Email</label>
+                                <input id="login-email" type="email" ng-model="loginUser.email" required>
+                            </md-input-container>
+                            <md-input-container flex>
+                                <label for="login-password">Password</label>
+                                <input id="login-password" type="password" ng-model="loginUser.password" required>
+                            </md-input-container>
+                            <div layout="row" layout-sm="column" layout-align="center space-between" layout-align-sm="center center">
+                                <div>
+                                    <md-button class="md-primary md-raised" ng-click="login(loginUser)" ng-disabled="loginForm.$invalid">
+                                        Log In
+                                    </md-button>
+                                </div>
+                                <div>
+                                    <md-button class="md-secondary md-raised" ng-click="register(loginUser)" ng-disabled="loginForm.$invalid">
+                                        Register
+                                    </md-button>
+                                </div>
+                            </div>
+                        </form>
+                    </md-whiteframe>
+                </div>
+                <div ng-if="user">
+                    <md-whiteframe class="md-whiteframe-z1" layout="column" layout-padding layout-wrap>
+                        <form name="userDetailsForm" flex>
+                            <h3>User Details</h3>
+                            <md-input-container>
+                                <label for="user-username">Username</label>
+                                <input id="user-username" type="text" ng-model="user.username">
+                            </md-input-container>
+                            <md-input-container>
+                                <label for="user-favorite-color">Favorite Color</label>
+                                <input id="user-favorite-color" type="text" ng-model="user.favoriteColor">
+                            </md-input-container>
+                        </form>
+                    </md-whiteframe>
+                    <md-whiteframe class="md-whiteframe-z1" layout="column" layout-padding layout-wrap ng-if="selectedRoom">
+                        <h3 flex>{{ selectedRoom.name }}</h3>
+                        <md-list>
+                            <md-item ng-repeat="chat in chats">
+                                <md-item-content layout="row" layout-align="space-between center" layout-padding layout-wrap>
+                                    <img ng-src="{{ chat.gravatar }}">
+                                    <div flex>
+                                        <h3>{{ chat.userUsername || chat.userEmail }}</h3>
+                                        <p>{{ chat.text }}</p>
+                                    </div>
+                                </md-item-content>
+                                <md-divider ng-if="!$last"></md-divider>
+                            </md-item>
+                        </md-list>
+                        <md-input-container>
+                            <label for="new-chat">New Chat</label>
+                            <input id="new-chat" type="text" ng-model="chat.text">
+                        </md-input-container>
+                        <div>
+                            <md-button class="md-primary md-raised" ng-click="addChat(selectedRoom.$id, chat, user)">
+                                Add Chat
+                            </md-button>
+                        </div>
+                    </md-whiteframe>
+                </div>
+            </md-content>
+        </div>
+    </div>
+    <!-- Angular Material Dependencies -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-animate.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-aria.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angular_material/0.9.4/angular-material.min.js"></script>
+    <!-- Firebase -->
+    <script src="https://cdn.firebase.com/js/client/2.2.4/firebase-debug.js"></script>
+    <!-- AngularFire -->
+    <script src="https://cdn.firebase.com/libs/angularfire/1.1.2/angularfire.min.js"></script>
+    <script src="scripts/app.js"></script>
+    <script src="scripts/auth.js"></script>
+    <script src="scripts/chat.js"></script>
+    <script src="lib/md5.min.js"></script>
+</body>
+
+</html>
